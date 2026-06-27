@@ -121,6 +121,7 @@ ${code}
   }
 });
 
-app.listen(3000, () => {
-  console.log('Security scanner running at http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Security scanner running at http://localhost:${PORT}`);
 });
