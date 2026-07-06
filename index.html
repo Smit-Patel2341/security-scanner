@@ -310,7 +310,9 @@
       navigator.clipboard.writeText(text).then(() => showToast('Fix copied to clipboard'));
     }
 
-    function exportMarkdown(vulns, summary) {
+    function exportMarkdown() {
+      const vulns = window._lastVulns || [];
+      const summary = window._lastSummary || '';
       let md = `# Security Scan Results\n\n## Summary\n${summary}\n\n`;
       vulns.forEach((v, i) => {
         md += `## ${i+1}. ${v.name} [${v.severity}]\n**Location:** ${v.location}\n`;
@@ -389,7 +391,10 @@
     }
 
     // ── PDF Download ──
-    async function downloadPDF(vulns, summary, counts) {
+    async function downloadPDF() {
+      const vulns = window._lastVulns || [];
+      const summary = window._lastSummary || '';
+      const counts = window._lastCounts || { Critical: 0, High: 0, Medium: 0, Low: 0 };
       const btn = document.getElementById('pdfBtn');
       btn.disabled = true;
       btn.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/></svg> Generating...`;
@@ -564,7 +569,7 @@
                 <div class="charts-section-title">Scan Overview</div>
                 <div class="charts-section-sub">Visual breakdown of detected vulnerabilities</div>
               </div>
-              <button class="pdf-btn" id="pdfBtn" onclick="downloadPDF(window._lastVulns, ${JSON.stringify(summary).replace(/</g,'\\u003c')}, window._lastCounts)">
+              <button class="pdf-btn" id="pdfBtn" onclick="downloadPDF()">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                 Download PDF Report
               </button>
@@ -596,7 +601,7 @@
             ${counts.High ? `<button class="filter-btn" data-sev="High" onclick="setFilter('High')">High (${counts.High})</button>` : ''}
             ${counts.Medium ? `<button class="filter-btn" data-sev="Medium" onclick="setFilter('Medium')">Medium (${counts.Medium})</button>` : ''}
             ${counts.Low ? `<button class="filter-btn" data-sev="Low" onclick="setFilter('Low')">Low (${counts.Low})</button>` : ''}
-            <button class="export-btn" onclick="exportMarkdown(window._lastVulns, ${JSON.stringify(summary).replace(/</g,'\\u003c')})">Copy as Markdown</button>
+            <button class="export-btn" onclick="exportMarkdown()">Copy as Markdown</button>
           </div>`;
 
           vulns.forEach((v, i) => {
@@ -629,6 +634,7 @@
         currentFilter = 'All';
         window._lastVulns = vulns;
         window._lastCounts = counts;
+        window._lastSummary = summary;
 
         // Render charts after DOM is updated
         requestAnimationFrame(() => renderCharts(counts));
