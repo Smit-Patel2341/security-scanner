@@ -1,7 +1,11 @@
 {
-  "functions": {
-    "api/scan.js": {
-      "maxDuration": 60
-    }
-  }
+  "version": 2,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/", "dest": "/index.html" }
+  ]
 }
