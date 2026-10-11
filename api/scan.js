@@ -1,6 +1,13 @@
 const OpenAI = require('openai');
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Created lazily inside the handler so a missing API key returns a clear JSON
+// error instead of crashing the whole function at module load (which shows up
+// as an opaque Vercel "FUNCTION_INVOCATION_FAILED").
+let client = null;
+function getClient() {
+  if (!client) client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return client;
+}
 
 // Lightweight in-memory soft rate limit: 20 requests per IP per 15 min.
 // Note: on serverless this only protects a single warm instance — it is a
@@ -27,6 +34,12 @@ function checkRateLimit(ip) {
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed.' });
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    return res.status(500).json({
+      error: 'Server is missing OPENAI_API_KEY. Add it in Vercel → Settings → Environment Variables, then redeploy.'
+    });
   }
 
   const ip = (req.headers && (req.headers['x-forwarded-for'] || '').split(',')[0].trim())
@@ -84,7 +97,7 @@ ${code}
 \`\`\``;
 
   try {
-    const message = await client.chat.completions.create({
+    const message = await getClient().chat.completions.create({
       model: 'gpt-4o',
       max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
